@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AD Group Lookup</title>
+
+    <!-- Fuentes con amplia cobertura de glifos (asegura que se vean todas las letras) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Noto+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Temas (apariencias) con CSS variables */
+      :root {
+        --bg: #0b1020;
+        --card: #121a33;
+        --muted: #9aa4b2;
+        --text: #e6ebf5;
+        --accent: #5b8cff;
+        --accent-2: #2dd4bf;
+        --border: #1f2a4d;
+        --danger: #ff6b6b;
+        --ok: #22c55e;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        /* Variables auxiliares para contraste */
+        --on-accent: #ffffff;
+        --text-strong: var(--text);
+      }
+      [data-theme="dark"] {
+        --bg: #0b1020;
+        --card: #0f152c;
+        --text: #e6ebf5;
+        --muted: #98a2b3;
+        --border: #1f2a4d;
+        --accent: #5b8cff;
+        --accent-2: #2dd4bf;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      [data-theme="light"] {
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --border: #dbe3f0;
+        --accent: #3b82f6;
+        --accent-2: #10b981;
+        --shadow: 0 8px 22px rgba(10, 28, 61, 0.1);
+      }
+      [data-theme="ocean"] {
+        --bg: #071b2e;
+        --card: #0a2540;
+        --text: #e8f3ff;
+        --muted: #9cc1e8;
+        --border: #133a60;
+        --accent: #4cc9f0;
+        --accent-2: #72efdd;
+        --shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+      }
+      [data-theme="terminal"] {
+        --bg: #0b0f0a;
+        --card: #0f130e;
+        --text: #d0ffd1;
+        --muted: #96b19a;
+        --border: #1c251c;
+        --accent: #00ff7b;
+        --accent-2: #39ff14;
+        --shadow: 0 12px 26px rgba(0, 255, 123, 0.05);
+      }
+      [data-theme="contrast"] {
+        --bg: #000;
+        --card: #0a0a0a;
+        --text: #fff;
+        --muted: #ddd;
+        --border: #333;
+        --accent: #ffcc00;
+        --accent-2: #00e0ff;
+        --shadow: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", "Noto Sans", ui-sans-serif, system-ui,
+          -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+
+        padding: 2rem;
+        max-width: 1100px;
+        margin: auto;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      /* Placeholders visibles en todos los temas */
+      input::placeholder,
+      textarea::placeholder {
+        color: color-mix(in oklab, var(--text) 60%, transparent);
+        opacity: 1;
+      }
+      .btn[disabled] {
+        color: color-mix(in oklab, var(--text) 65%, transparent);
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+      .logo {
+        width: 44px;
+        height: 44px;
+        background: radial-gradient(
+            closest-side,
+            var(--accent),
+            #4b6cff 60%,
+            transparent 61%
+          ),
+          radial-gradient(
+            closest-side,
+            var(--accent-2),
+            #1fbfa6 60%,
+            transparent 61%
+          );
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .logo::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      /* Título “pro” con gradiente y brillo */
+      h1#appTitle {
+        margin: 0;
+        font-weight: 900;
+        font-size: clamp(1.3rem, 1.2vw + 1.1rem, 1.8rem);
+        letter-spacing: 0.5px;
+        background: linear-gradient(
+          90deg,
+          var(--accent),
+          var(--accent-2),
+          var(--accent)
+        );
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        animation: title-sheen 10s linear infinite;
+      }
+      @keyframes title-sheen {
+        to {
+          background-position: -200% 0;
+        }
+      }
+
+      .lang-switch {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      /* Nuevo: contenedor derecho del header (idioma/tema + avatar) */
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        margin-top: 0;
+        padding: 0.6rem 0.95rem;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.04),
+          transparent
+        );
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .btn.primary {
+        background: linear-gradient(180deg, var(--accent), #294de0);
+        border-color: #3554f0;
+        color: var(--on-accent);
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+      .btn.mini {
+        padding: 0.35rem 0.6rem;
+        border-radius: 8px;
+      }
+
+      label {
+        display: block;
+        margin-top: 0.75rem;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        margin-top: 0.35rem;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--card) 80%, black 20%);
+        border-radius: 10px;
+        outline: none;
+        color: var(--text-strong);
+      }
+      input[type="text"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px
+          color-mix(in oklab, var(--accent) 30%, transparent);
+      }
+      :focus-visible {
+        outline: 2px solid color-mix(in oklab, var(--accent) 55%, #ffffff);
+        outline-offset: 2px;
+        border-radius: 8px;
+      }
+
+      .row {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(12, 1fr);
+        align-items: end;
+      }
+      .col-4 {
+        grid-column: span 4;
+      }
+      .col-6 {
+        grid-column: span 6;
+      }
+      .col-8 {
+        grid-column: span 8;
+      }
+      .col-12 {
+        grid-column: span 12;
+      }
+      @media (max-width: 800px) {
+        .col-4,
+        .col-6,
+        .col-8,
+        .col-12 {
+          grid-column: span 12;
+        }
+      }
+
+      .split {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1.3fr 0.9fr;
+      }
+      @media (max-width: 1000px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .kpis {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 0.5rem;
+      }
+      .kpi {
+        background: color-mix(in oklab, var(--card) 95%, black 5%);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.8rem;
+      }
+      .kpi .v {
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+
+      pre {
+        background: color-mix(in oklab, var(--card) 95%, black 5%);
+        padding: 1rem;
+        border-radius: 10px;
+        overflow: auto;
+        border: 1px solid var(--border);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .pill {
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--card) 90%, black 10%);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+      .ok {
+        color: var(--ok);
+      }
+      .danger {
+        color: var(--danger);
+      }
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-top-color: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        animation: spin 1s linear infinite;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        color: var(--muted);
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.6rem 0.5rem;
+        border-bottom: 1px solid
+          color-mix(in oklab, var(--border) 60%, transparent);
+        font-size: 0.95rem;
+        color: var(--text-strong);
+      }
+      th {
+        font-weight: 800;
+        background: color-mix(in oklab, var(--card) 95%, black 5%);
+      }
+      th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+      tr.selected {
+        background: color-mix(in oklab, var(--accent) 18%, transparent);
+      }
+      .result-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.6rem;
+        flex-wrap: wrap;
+      }
+      .result-toolbar {
+        display: none; /* se cambia a flex por JS cuando hay datos */
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.6rem;
+      }
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      /* Consola */
+      .console {
+        background: color-mix(in oklab, var(--card) 95%, black 5%);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.75rem;
+      }
+      .console-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .console-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+      .console-actions textarea {
+        min-height: 84px;
+        flex: 1 1 280px;
+      }
+
+      /* Modal edición */
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.45);
+      }
+      .modal .panel {
+        width: min(680px, 92vw);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 1rem;
+      }
+      .modal .panel h3 {
+        margin: 0 0 0.5rem 0;
+      }
+      .modal .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      .modal .grid .full {
+        grid-column: 1 / -1;
+      }
+      .modal .footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      /* Dropdown de temas */
+      .theme-dropdown {
+        position: relative;
+        display: inline-block;
+      }
+      .theme-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        min-width: 200px;
+        max-height: 320px;
+        overflow: auto;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 0.35rem;
+        display: none;
+        z-index: 50;
+      }
+      .theme-menu.open {
+        display: block;
+      }
+      .theme-menu [role="option"] {
+        list-style: none;
+        padding: 0.5rem 0.6rem;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--text);
+      }
+      .theme-menu [role="option"]:hover,
+      .theme-menu [role="option"]:focus {
+        background: color-mix(in oklab, var(--accent) 20%, transparent);
+        outline: none;
+      }
+      .theme-menu [aria-selected="true"]::before {
+        content: "✓ ";
+        color: var(--accent-2);
+        font-weight: 800;
+      }
+
+      /* ====== Avatar circular del dueño (más grande y visible) ====== */
+      .owner-avatar {
+        --size: clamp(48px, 4.6vw, 64px); /* antes: clamp(36px, 3.8vw, 48px) */
+        --ring-color: var(--bg);
+        --ring-shadow: rgba(0, 0, 0, 0.18);
+
+        width: var(--size);
+        height: var(--size);
+        border-radius: 50%;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #8ec5fc 0%, #e0c3fc 100%);
+        box-shadow: 0 0 0 2px var(--ring-color), 0 4px 14px var(--ring-shadow);
+        text-decoration: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .owner-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* asegura que la foto llene el círculo */
+        object-position: center;
+        display: block;
+      }
+      .owner-initials {
+        font-weight: 700;
+        font-size: calc(
+          var(--size) * 0.42
+        ); /* escala con el tamaño del círculo */
+        line-height: 1;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        color: #fff;
+        letter-spacing: 0.5px;
+      }
+
+      /* ====== Ajustes Responsive adicionales ====== */
+      @media (max-width: 900px) {
+        .kpis {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 640px) {
+        body {
+          padding: 1rem;
+        }
+        header {
+          gap: 0.75rem;
+        }
+        .brand {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .header-right {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .console-actions {
+          flex-direction: column;
+        }
+        .console-actions > div button {
+          width: 100%;
+        }
+        .kpis {
+          grid-template-columns: 1fr;
+        }
+        /* Forzar más altura del contenedor de tabla en móvil */
+        #result > div[style] {
+          max-height: 60vh !important;
+        }
+        /* Toolbar de resultados apilada */
+        .result-toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .toolbar-right {
+          justify-content: space-between;
+        }
+        .toolbar-right .btn,
+        .toolbar-right select {
+          flex: 1 1 auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1 id="appTitle">Consulta de Grupo AD</h1>
+      </div>
+
+      <!-- Lado derecho del header: idioma/tema + avatar -->
+      <div class="header-right">
+        <div class="lang-switch">
+          <label for="lang" id="langLabel">Idioma</label>
+          <select id="lang" aria-label="Language">
+            <option value="es">Español</option>
+            <option value="en">English</option>
+            <option value="pt">Português</option>
+          </select>
+
+          <!-- Botón Apariencia con menú de temas -->
+          <div class="theme-dropdown" id="themeDropdown">
+            <button
+              class="btn ghost"
+              id="btnTheme"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+            >
+              Apariencia ▾
+            </button>
+            <ul
+              class="theme-menu"
+              id="themeMenu"
+              role="listbox"
+              aria-label="Temas"
+            ></ul>
+          </div>
+        </div>
+
+        <!-- Avatar del dueño de la aplicación -->
+        <a
+          class="owner-avatar"
+          href="#"
+          title="Dueño de la aplicación"
+          aria-label="Foto del dueño de la aplicación"
+        >
+          <img
+            src="https://i.imgur.com/KhvoT2c.jpeg"
+            alt="Foto del dueño de la aplicación"
+            width="64"
+            height="64"
+            decoding="async"
+            referrerpolicy="no-referrer"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';"
+          />
+          <!-- Cambia 'DU' por las iniciales reales -->
+          <span class="owner-initials" aria-hidden="true" style="display: none"
+            >DU</span
+          >
+        </a>
+      </div>
+    </header>
+
+    <div class="split">
+      <section class="card">
+        <form id="lookupForm">
+          <div class="row">
+            <div class="col-8">
+              <label for="groupName" id="labelGroupName"
+                >Nombre del Grupo</label
+              >
+              <input
+                type="text"
+                id="groupName"
+                placeholder="Ej. Ventas Madrid"
+                required
+              />
+              <div class="hint" id="labelGroupHint">
+                Busca miembros directos y opcionalmente anidados.
+              </div>
+            </div>
+            <div class="col-4">
+              <label for="format" id="labelFormat">Formato de salida</label>
+              <select id="format">
+                <option value="csv">CSV</option>
+                <option value="json">JSON</option>
+              </select>
+            </div>
+
+            <div class="col-4">
+              <label class="inline">
+                <input type="checkbox" id="includeEmail" checked />
+                <span id="labelIncludeEmail">Incluir email si existe</span>
+              </label>
+            </div>
+            <div class="col-4">
+              <label class="inline">
+                <input type="checkbox" id="includePrimary" checked />
+                <span id="labelIncludePrimary"
+                  >Incluir usuarios cuyo PrimaryGroup apunte a este grupo</span
+                >
+              </label>
+            </div>
+            <div class="col-4">
+              <label class="inline">
+                <input type="checkbox" id="includeNested" checked />
+                <span id="labelIncludeNested">Incluir miembros anidados</span>
+              </label>
+            </div>
+            <div class="col-4">
+              <label class="inline">
+                <input type="checkbox" id="includeDisabled" />
+                <span id="labelIncludeDisabled"
+                  >Incluir cuentas deshabilitadas</span
+                >
+              </label>
+            </div>
+
+            <div class="col-8">
+              <label for="attributes" id="labelAttributes"
+                >Atributos extra (opcional)</label
+              >
+              <select id="attributes" class="multi" multiple>
+                <option value="displayName">displayName</option>
+                <option value="userPrincipalName">userPrincipalName</option>
+                <option value="department">department</option>
+                <option value="title">title</option>
+                <option value="manager" selected>manager</option>
+                <option value="distinguishedName">distinguishedName</option>
+                <option value="lastLogonDate">lastLogonDate</option>
+              </select>
+              <div class="hint" id="labelAttributesHint">
+                Mantén Ctrl/Cmd para selección múltiple.
+              </div>
+            </div>
+
+            <div class="col-8">
+              <label for="outFolder" id="labelOutFolder"
+                >Ruta de salida en servidor (opcional)</label
+              >
+              <input type="text" id="outFolder" placeholder="ej. C:\Reports" />
+              <label class="inline">
+                <input type="checkbox" id="saveToServer" />
+                <span id="labelSaveToServer"
+                  >Guardar archivo también en el servidor</span
+                >
+              </label>
+            </div>
+
+            <div class="col-12">
+              <button class="btn primary" type="submit" id="btnRun">
+                <span
+                  class="spinner"
+                  id="runSpinner"
+                  style="display: none"
+                ></span>
+                <span id="btnRunText">Ejecutar búsqueda</span>
+              </button>
+              <button
+                class="btn ghost"
+                type="button"
+                id="btnReset"
+                style="display: none"
+              >
+                Reiniciar
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="console">
+          <div class="console-top">
+            <strong id="consoleTitle">Consola de comandos</strong>
+            <span class="badge">/help</span>
+          </div>
+          <div class="console-actions">
+            <textarea
+              id="consoleInput"
+              rows="3"
+              placeholder="Escribe aquí lo que quieras buscar o comandos. Enter = Buscar. Ej.: /group Ventas /format json /run"
+            ></textarea>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap">
+              <button class="btn mini" id="btnConsoleSearch">Buscar</button>
+              <button class="btn mini" id="btnConsoleClear">Limpiar</button>
+            </div>
+          </div>
+          <div class="hint" id="consoleHint">
+            Comandos: /help, /lang es|en|pt, /group NOMBRE, /format csv|json,
+            /includeEmail on|off, /includePrimary on|off, /includeNested on|off,
+            /includeDisabled on|off, /out RUTA, /save on|off, /filter TEXTO,
+            /theme next|dark|light|ocean|terminal|contrast, /run, /clear
+          </div>
+        </div>
+
+        <div class="kpis" aria-hidden="true">
+          <div class="kpi">
+            <div class="v" id="kpiMembers">0</div>
+            <div class="muted" id="kpiMembersLbl">Miembros</div>
+          </div>
+          <div class="kpi">
+            <div class="v" id="kpiFormat">CSV</div>
+            <div class="muted" id="kpiFormatLbl">Formato</div>
+          </div>
+          <div class="kpi">
+            <div class="v" id="kpiLang">ES</div>
+            <div class="muted" id="kpiLangLbl">Idioma</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 1rem">
+      <div class="result-head">
+        <h2 id="resultTitle" style="margin: 0">Salida / Resultado</h2>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+          "
+        >
+          <span class="pill" id="localEditsPill" style="display: none"
+            >Ediciones locales</span
+          >
+          <span class="pill" id="selectedPill" style="display: none"
+            >0 seleccionados</span
+          >
+          <span class="pill" id="statusPill">Inactivo</span>
+        </div>
+      </div>
+
+      <!-- Barra de herramientas de resultados -->
+      <div class="result-toolbar" id="resultToolbar">
+        <div
+          class="inline"
+          style="
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+          "
+        >
+          <button class="btn mini" id="btnAddRow">Añadir</button>
+          <button class="btn mini" id="btnEditRow" disabled>Modificar</button>
+          <button class="btn mini" id="btnDeleteSelected" disabled>
+            Borrar
+          </button>
+          <button class="btn mini" id="btnCopySelected" disabled>Copiar</button>
+          <button class="btn mini" id="btnCutSelected" disabled>Cortar</button>
+          <button class="btn mini" id="btnPaste">Pegar</button>
+          <span class="note" id="sortHint"
+            >Haz clic en los encabezados para ordenar</span
+          >
+        </div>
+        <div class="toolbar-right">
+          <button class="btn mini" id="btnExportJSONFull">Export JSON</button>
+          <button class="btn mini" id="btnExportJSONFiltered">
+            Export JSON (filtro)
+          </button>
+          <button class="btn mini" id="btnCopyPage">Copiar página (CSV)</button>
+          <button class="btn mini" id="btnCopyFiltered">
+            Copiar filtrado (CSV)
+          </button>
+          <label class="inline muted" for="pageSizeSel" id="labelPageSize"
+            >Tamaño</label
+          >
+          <select id="pageSizeSel">
+            <option>10</option>
+            <option selected>25</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+          <button class="btn mini" id="btnPrevPage">◀</button>
+          <span class="muted" id="pageIndicator">1/1</span>
+          <button class="btn mini" id="btnNextPage">▶</button>
+        </div>
+      </div>
+
+      <div id="result">
+        <em id="resultPlaceholder">Los resultados aparecerán aquí.</em>
+      </div>
+      <div
+        class="footer-note muted"
+        id="savedPathNote"
+        style="display: none"
+      ></div>
+      <div class="note" style="margin-top: 0.5rem">
+        Nota: Añadir/editar/borrar solo afecta a los datos locales (no se
+        sincroniza con AD).
+      </div>
+    </section>
+
+    <!-- Modal genérico para Añadir/Editar -->
+    <div class="modal" id="modal">
+      <div class="panel">
+        <h3 id="modalTitle">Editar registro</h3>
+        <div class="grid" id="modalFields"></div>
+        <div class="footer">
+          <button class="btn ghost" id="modalCancel">Cancelar</button>
+          <button class="btn primary" id="modalSave">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // I18N
+      const I18N = {
+        es: {
+          appTitle: "Consulta de Grupo AD",
+          langLabel: "Idioma",
+          groupName: "Nombre del Grupo",
+          groupHint: "Busca miembros directos y opcionalmente anidados.",
+          format: "Formato de salida",
+          includeEmail: "Incluir email si existe",
+          includePrimary:
+            "Incluir usuarios cuyo PrimaryGroup apunte a este grupo",
+          includeNested: "Incluir miembros anidados",
+          includeDisabled: "Incluir cuentas deshabilitadas",
+          attributes: "Atributos extra (opcional)",
+          attributesHint: "Mantén Ctrl/Cmd para selección múltiple.",
+          outFolder: "Ruta de salida en servidor (opcional)",
+          saveToServer: "Guardar archivo también en el servidor",
+          run: "Ejecutar búsqueda",
+          reset: "Reiniciar",
+          results: "Salida / Resultado",
+          processing: "Procesando...",
+          download: "Descarga generada",
+          idle: "Inactivo",
+          ok: "OK",
+          error: "Error",
+          consoleTitle: "Consola de comandos",
+          consolePlaceholder:
+            "Escribe aquí lo que quieras buscar o comandos. Enter = Buscar.",
+          consoleHint:
+            "Comandos: /help, /lang es|en|pt, /group NOMBRE, /format csv|json, /includeEmail on|off, /includePrimary on|off, /includeNested on|off, /includeDisabled on|off, /out RUTA, /save on|off, /filter TEXTO, /theme next|dark|light|ocean|terminal|contrast, /run, /clear",
+          kpiMembers: "Miembros",
+          kpiFormat: "Formato",
+          kpiLang: "Idioma",
+          resultsHere: "Los resultados aparecerán aquí.",
+          exportJSON: "Export JSON",
+          exportJSONFiltered: "Export JSON (filtro)",
+          pageSize: "Tamaño",
+          prev: "Anterior",
+          next: "Siguiente",
+          page: "Página",
+          of: "de",
+          savedOnServer: "Guardado en el servidor",
+          copyPageCsv: "Copiar página (CSV)",
+          copyFilteredCsv: "Copiar filtrado (CSV)",
+          sortHint: "Haz clic en los encabezados para ordenar",
+          copied: "Copiado al portapapeles",
+          // Edición
+          add: "Añadir",
+          edit: "Modificar",
+          delete: "Borrar",
+          copy: "Copiar",
+          cut: "Cortar",
+          paste: "Pegar",
+          appearance: "Apariencia",
+          selectedN: (n) => `${n} seleccionados`,
+          localEdits: "Ediciones locales",
+          editRecord: "Modificar registro",
+          addRecord: "Añadir registro",
+          cancel: "Cancelar",
+          save: "Guardar",
+          selectOneEdit: "Selecciona exactamente 1 fila para modificar",
+          nothingToPaste: "No hay datos para pegar",
+          invalidPaste: "Formato de pegado no reconocido (usa JSON o CSV)",
+        },
+        en: {
+          appTitle: "AD Group Lookup",
+          langLabel: "Language",
+          groupName: "Group Name",
+          groupHint: "Find direct and optionally nested members.",
+          format: "Output format",
+          includeEmail: "Include email if present",
+          includePrimary:
+            "Include users whose PrimaryGroup points to this group",
+          includeNested: "Include nested members",
+          includeDisabled: "Include disabled accounts",
+          attributes: "Extra attributes (optional)",
+          attributesHint: "Hold Ctrl/Cmd for multi-select.",
+          outFolder: "Server output path (optional)",
+          saveToServer: "Also save file on server",
+          run: "Run lookup",
+          reset: "Reset",
+          results: "Output / Result",
+          processing: "Processing...",
+          download: "Download generated",
+          idle: "Idle",
+          ok: "OK",
+          error: "Error",
+          consoleTitle: "Command console",
+          consolePlaceholder:
+            "Type what to search or commands. Enter = Search.",
+          consoleHint:
+            "Commands: /help, /lang es|en|pt, /group NAME, /format csv|json, /includeEmail on|off, /includePrimary on|off, /includeNested on|off, /includeDisabled on|off, /out PATH, /save on|off, /filter TEXT, /theme next|dark|light|ocean|terminal|contrast, /run, /clear",
+          kpiMembers: "Members",
+          kpiFormat: "Format",
+          kpiLang: "Language",
+          resultsHere: "Results will appear here.",
+          exportJSON: "Export JSON",
+          exportJSONFiltered: "Export JSON (filtered)",
+          pageSize: "Page size",
+          prev: "Prev",
+          next: "Next",
+          page: "Page",
+          of: "of",
+          savedOnServer: "Saved on server",
+          copyPageCsv: "Copy page (CSV)",
+          copyFilteredCsv: "Copy filtered (CSV)",
+          sortHint: "Click headers to sort",
+          copied: "Copied to clipboard",
+          // Editing
+          add: "Add",
+          edit: "Edit",
+          delete: "Delete",
+          copy: "Copy",
+          cut: "Cut",
+          paste: "Paste",
+          appearance: "Appearance",
+          selectedN: (n) => `${n} selected`,
+          localEdits: "Local edits",
+          editRecord: "Edit record",
+          addRecord: "Add record",
+          cancel: "Cancel",
+          save: "Save",
+          selectOneEdit: "Select exactly 1 row to edit",
+          nothingToPaste: "Nothing to paste",
+          invalidPaste: "Unrecognized paste format (use JSON or CSV)",
+        },
+        pt: {
+          appTitle: "Consulta de Grupo AD",
+          langLabel: "Idioma",
+          groupName: "Nome do Grupo",
+          groupHint: "Encontre membros diretos e opcionalmente aninhados.",
+          format: "Formato de saída",
+          includeEmail: "Incluir e-mail se existir",
+          includePrimary:
+            "Incluir usuários cujo PrimaryGroup aponta para este grupo",
+          includeNested: "Incluir membros aninhados",
+          includeDisabled: "Incluir contas desativadas",
+          attributes: "Atributos extras (opcional)",
+          attributesHint: "Segure Ctrl/Cmd para seleção múltipla.",
+          outFolder: "Caminho de saída no servidor (opcional)",
+          saveToServer: "Também salvar arquivo no servidor",
+          run: "Executar pesquisa",
+          reset: "Reiniciar",
+          results: "Saída / Resultado",
+          processing: "Processando...",
+          download: "Download gerado",
+          idle: "Inativo",
+          ok: "OK",
+          error: "Erro",
+          consoleTitle: "Console de comandos",
+          consolePlaceholder:
+            "Digite o que buscar ou comandos. Enter = Buscar.",
+          consoleHint:
+            "Comandos: /help, /lang es|en|pt, /group NOME, /format csv|json, /includeEmail on|off, /includePrimary on|off, /includeNested on|off, /includeDisabled on|off, /out CAMINHO, /save on|off, /filter TEXTO, /theme next|dark|light|ocean|terminal|contrast, /run, /clear",
+          kpiMembers: "Membros",
+          kpiFormat: "Formato",
+          kpiLang: "Idioma",
+          resultsHere: "Os resultados aparecerão aqui.",
+          exportJSON: "Exportar JSON",
+          exportJSONFiltered: "Exportar JSON (filtrado)",
+          pageSize: "Tamanho",
+          prev: "Anterior",
+          next: "Próximo",
+          page: "Página",
+          of: "de",
+          savedOnServer: "Salvo no servidor",
+          copyPageCsv: "Copiar página (CSV)",
+          copyFilteredCsv: "Copiar filtrado (CSV)",
+          sortHint: "Clique nos cabeçalhos para ordenar",
+          copied: "Copiado para a área de transferência",
+          // Edição
+          add: "Adicionar",
+          edit: "Editar",
+          delete: "Excluir",
+          copy: "Copiar",
+          cut: "Cortar",
+          paste: "Colar",
+          appearance: "Aparência",
+          selectedN: (n) => `${n} selecionados`,
+          localEdits: "Edições locais",
+          editRecord: "Editar registro",
+          addRecord: "Adicionar registro",
+          cancel: "Cancelar",
+          save: "Salvar",
+          selectOneEdit: "Selecione exatamente 1 linha para editar",
+          nothingToPaste: "Nada para colar",
+          invalidPaste: "Formato de colagem não reconhecido (use JSON ou CSV)",
+        },
+      };
+
+      const el = (id) => document.getElementById(id);
+      let currentLang = localStorage.getItem("adlang") || "es";
+      el("lang").value = currentLang;
+
+      const themes = ["dark", "light", "ocean", "terminal", "contrast"];
+      let currentTheme = localStorage.getItem("adtheme") || "dark";
+      document.documentElement.setAttribute("data-theme", currentTheme);
+
+      function t(k, ...args) {
+        const pack = I18N[currentLang] || I18N["es"];
+        const v = pack[k] ?? I18N["es"][k] ?? k;
+        return typeof v === "function" ? v(...args) : v;
+      }
+      function applyI18n() {
+        el("appTitle").textContent = t("appTitle");
+        el("langLabel").textContent = t("langLabel");
+        el("labelGroupName").textContent = t("groupName");
+        el("labelGroupHint").textContent = t("groupHint");
+        el("labelFormat").textContent = t("format");
+        el("labelIncludeEmail").textContent = t("includeEmail");
+        el("labelIncludePrimary").textContent = t("includePrimary");
+        el("labelIncludeNested").textContent = t("includeNested");
+        el("labelIncludeDisabled").textContent = t("includeDisabled");
+        el("labelAttributes").textContent = t("attributes");
+        el("labelAttributesHint").textContent = t("attributesHint");
+        el("labelOutFolder").textContent = t("outFolder");
+        el("labelSaveToServer").textContent = t("saveToServer");
+        el("btnRunText").textContent = t("run");
+        el("btnReset").textContent = t("reset");
+        el("resultTitle").textContent = t("results");
+        el("resultPlaceholder").textContent = t("resultsHere");
+        el("consoleTitle").textContent = t("consoleTitle");
+        el("consoleInput").placeholder = t("consolePlaceholder");
+        el("consoleHint").textContent = t("consoleHint");
+        el("kpiMembersLbl").textContent = t("kpiMembers");
+        el("kpiFormatLbl").textContent = t("kpiFormat");
+        el("kpiLangLbl").textContent = t("kpiLang");
+        el("statusPill").textContent = t("idle");
+        el("kpiLang").textContent = currentLang.toUpperCase();
+        // toolbar
+        el("btnExportJSONFull").textContent = t("exportJSON");
+        el("btnExportJSONFiltered").textContent = t("exportJSONFiltered");
+        el("btnCopyPage").textContent = t("copyPageCsv");
+        el("btnCopyFiltered").textContent = t("copyFilteredCsv");
+        el("labelPageSize").textContent = t("pageSize");
+        el("sortHint").textContent = t("sortHint");
+        // editing toolbar
+        el("btnAddRow").textContent = t("add");
+        el("btnEditRow").textContent = t("edit");
+        el("btnDeleteSelected").textContent = t("delete");
+        el("btnCopySelected").textContent = t("copy");
+        el("btnCutSelected").textContent = t("cut");
+        el("btnPaste").textContent = t("paste");
+        // El texto del botón Apariencia se ajusta más abajo para incluir ▾
+      }
+      applyI18n();
+
+      el("lang").addEventListener("change", () => {
+        currentLang = el("lang").value;
+        localStorage.setItem("adlang", currentLang);
+        applyI18n();
+        // Actualiza botón/menú de tema al cambiar idioma
+        const btn = el("btnTheme");
+        if (btn) btn.textContent = t("appearance") + " ▾";
+        const menu = el("themeMenu");
+        if (menu) menu.setAttribute("aria-label", t("appearance"));
+        buildThemeMenu();
+        renderPage?.();
+      });
+
+      // Estado + paginación + ordenamiento + selección
+      const state = {
+        raw: null, // array de objetos
+        filtered: [],
+        page: 1,
+        pageSize: 25,
+        filterText: "",
+        columns: [],
+        sortBy: null,
+        sortDir: "asc", // 'asc' | 'desc'
+        selected: new Set(), // de _id
+        dirty: false, // hubo ediciones locales
+      };
+
+      function setProcessing(is) {
+        el("runSpinner").style.display = is ? "inline-block" : "none";
+        el("btnRun").disabled = is;
+        el("statusPill").textContent = is ? t("processing") : t("idle");
+      }
+      function setMembersCount(n) {
+        el("kpiMembers").textContent = n;
+      }
+      function updateFormatKpi() {
+        el("kpiFormat").textContent = el("format").value.toUpperCase();
+      }
+      el("format").addEventListener("change", updateFormatKpi);
+      updateFormatKpi();
+
+      function updateToolbarVisibility() {
+        const visible = state.raw && state.raw.length ? "flex" : "none";
+        el("resultToolbar").style.display = visible;
+      }
+      function setDirty(flag) {
+        state.dirty = !!flag;
+        el("localEditsPill").style.display = state.dirty
+          ? "inline-block"
+          : "none";
+      }
+      function updateSelectedPill() {
+        const n = state.selected.size;
+        el("selectedPill").style.display = n ? "inline-block" : "none";
+        el("selectedPill").textContent = I18N[currentLang]?.selectedN
+          ? I18N[currentLang].selectedN(n)
+          : `${n} seleccionados`;
+        el("btnDeleteSelected").disabled = n === 0;
+        el("btnCopySelected").disabled = n === 0;
+        el("btnCutSelected").disabled = n === 0;
+        el("btnEditRow").disabled = n !== 1;
+      }
+
+      function ensureIds() {
+        if (!Array.isArray(state.raw)) return;
+        for (const r of state.raw) {
+          if (!r._id)
+            r._id = crypto.randomUUID
+              ? crypto.randomUUID()
+              : "id_" + Math.random().toString(36).slice(2);
+        }
+      }
+
+      function computeColumns() {
+        const source =
+          Array.isArray(state.filtered) && state.filtered.length
+            ? state.filtered
+            : Array.isArray(state.raw)
+            ? state.raw
+            : [];
+        const set = new Set();
+        source.forEach((row) =>
+          Object.keys(row).forEach((k) => {
+            if (k !== "_id") set.add(k);
+          })
+        );
+        state.columns = Array.from(set);
+      }
+
+      function getSortValue(v) {
+        if (v === null || v === undefined) return { type: 3, val: "" };
+        if (typeof v === "number") return { type: 0, val: v };
+        if (v instanceof Date) return { type: 1, val: v.getTime() };
+        const s = String(v).trim();
+        const num = Number(s);
+        if (!Number.isNaN(num) && s !== "") return { type: 0, val: num };
+        const ts = Date.parse(s);
+        if (!Number.isNaN(ts)) return { type: 1, val: ts };
+        if (/^(true|false)$/i.test(s))
+          return { type: 2, val: /^true$/i.test(s) ? 1 : 0 };
+        return { type: 2, val: s.toLowerCase() };
+      }
+      function sortFiltered() {
+        if (!state.sortBy) return;
+        const col = state.sortBy;
+        const dir = state.sortDir === "desc" ? -1 : 1;
+        state.filtered.sort((a, b) => {
+          const av = getSortValue(a[col]);
+          const bv = getSortValue(b[col]);
+          if (av.type !== bv.type) return (av.type - bv.type) * dir;
+          if (av.val < bv.val) return -1 * dir;
+          if (av.val > bv.val) return 1 * dir;
+          return 0;
+        });
+      }
+
+      function renderTable(data, totalCount) {
+        if (!Array.isArray(data) || data.length === 0) {
+          el("result").innerHTML = `<em id="resultPlaceholder">${t(
+            "resultsHere"
+          )}</em>`;
+          setMembersCount(0);
+          return;
+        }
+        const cols = state.columns.length
+          ? state.columns
+          : Array.from(
+              data.reduce((set, row) => {
+                Object.keys(row).forEach((k) => {
+                  if (k !== "_id") set.add(k);
+                });
+                return set;
+              }, new Set())
+            );
+
+        const thead = `<thead><tr>
+            <th><input type="checkbox" id="chkAll"></th>
+            ${cols
+              .map((c) => {
+                const ind =
+                  state.sortBy === c
+                    ? state.sortDir === "asc"
+                      ? " ▲"
+                      : " ▼"
+                    : "";
+                return `<th class="sortable" data-col="${c}">${c}${ind}</th>`;
+              })
+              .join("")}
+          </tr></thead>`;
+
+        const rows = data
+          .map((r) => {
+            const rid = r._id;
+            const selected = state.selected.has(rid) ? ' class="selected"' : "";
+            const tds = cols
+              .map((c) => {
+                let v = r[c];
+                if (v === null || v === undefined) v = "";
+                if (typeof v === "boolean")
+                  v = v
+                    ? `<span class="ok">true</span>`
+                    : `<span class="danger">false</span>`;
+                return `<td data-col="${c}">${String(v)
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")}</td>`;
+              })
+              .join("");
+            return `<tr data-id="${rid}"${selected}><td><input type="checkbox" class="chkRow"${
+              state.selected.has(rid) ? " checked" : ""
+            }></td>${tds}</tr>`;
+          })
+          .join("");
+
+        const totalTxt =
+          typeof totalCount === "number"
+            ? ` <span class="muted">(${data.length} ${t(
+                "kpiMembers"
+              ).toLowerCase()} ${t("of")} ${totalCount})</span>`
+            : "";
+        el(
+          "result"
+        ).innerHTML = `<div class="muted" style="margin:.25rem 0">${totalTxt}</div><div style="max-height:420px; overflow:auto"><table>${thead}<tbody>${rows}</tbody></table></div>`;
+
+        attachSortHandlers();
+        attachSelectionHandlers();
+        setMembersCount(totalCount ?? data.length);
+        updateSelectedPill();
+      }
+
+      function attachSortHandlers() {
+        const table = el("result").querySelector("table");
+        if (!table) return;
+        table.querySelectorAll("th.sortable").forEach((th) => {
+          th.addEventListener("click", () => {
+            const col = th.getAttribute("data-col");
+            if (state.sortBy === col) {
+              state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+            } else {
+              state.sortBy = col;
+              state.sortDir = "asc";
+            }
+            sortFiltered();
+            state.page = 1;
+            renderPage();
+          });
+        });
+      }
+
+      function attachSelectionHandlers() {
+        const container = el("result");
+        const table = container.querySelector("table");
+        if (!table) return;
+        const chkAll = container.querySelector("#chkAll");
+        if (chkAll) {
+          chkAll.addEventListener("change", () => {
+            const slice = getCurrentSlice();
+            slice.forEach((r) =>
+              chkAll.checked
+                ? state.selected.add(r._id)
+                : state.selected.delete(r._id)
+            );
+            renderPage();
+          });
+        }
+        table.querySelectorAll("tbody tr").forEach((tr) => {
+          const rid = tr.getAttribute("data-id");
+          tr.addEventListener("click", (ev) => {
+            if (ev.target.classList.contains("chkRow")) return; // checkbox click separate
+            // toggle selection on row click
+            if (state.selected.has(rid)) state.selected.delete(rid);
+            else state.selected.add(rid);
+            tr.classList.toggle("selected");
+            tr.querySelector(".chkRow").checked = state.selected.has(rid);
+            updateSelectedPill();
+          });
+        });
+        table.querySelectorAll(".chkRow").forEach((ch) => {
+          ch.addEventListener("change", (ev) => {
+            const rid = ev.target.closest("tr").getAttribute("data-id");
+            if (ev.target.checked) state.selected.add(rid);
+            else state.selected.delete(rid);
+            ev.target
+              .closest("tr")
+              .classList.toggle("selected", ev.target.checked);
+            updateSelectedPill();
+          });
+        });
+      }
+
+      function applyFilter(text) {
+        state.filterText = (text || "").toLowerCase();
+        if (!state.raw || !Array.isArray(state.raw)) {
+          state.filtered = [];
+        } else if (!state.filterText) {
+          state.filtered = [...state.raw];
+        } else {
+          state.filtered = state.raw.filter((row) =>
+            Object.entries(row).some(([k, v]) => {
+              if (k === "_id") return false;
+              return (
+                v !== null &&
+                v !== undefined &&
+                String(v).toLowerCase().includes(state.filterText)
+              );
+            })
+          );
+        }
+        computeColumns();
+        sortFiltered();
+        state.page = 1;
+        renderPage();
+      }
+
+      function renderPage() {
+        const total = state.filtered.length || 0;
+        const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+        if (state.page > totalPages) state.page = totalPages;
+        const start = (state.page - 1) * state.pageSize;
+        const slice = state.filtered.slice(start, start + state.pageSize);
+        renderTable(slice, total);
+        el("pageIndicator").textContent = `${state.page}/${totalPages}`;
+        el("btnPrevPage").disabled = state.page <= 1;
+        el("btnNextPage").disabled = state.page >= totalPages;
+      }
+      function getCurrentSlice() {
+        const start = (state.page - 1) * state.pageSize;
+        return state.filtered.slice(start, start + state.pageSize);
+      }
+
+      function resetAll() {
+        el("lookupForm").reset();
+        el("includeEmail").checked = true;
+        el("includePrimary").checked = true;
+        el("includeNested").checked = true;
+        el("includeDisabled").checked = false;
+        [...el("attributes").options].forEach(
+          (o) => (o.selected = o.value === "manager")
+        );
+        el("result").innerHTML = `<em id="resultPlaceholder">${t(
+          "resultsHere"
+        )}</em>`;
+        el("savedPathNote").style.display = "none";
+        el("savedPathNote").textContent = "";
+        el("btnReset").style.display = "none";
+        el("statusPill").textContent = t("idle");
+        setMembersCount(0);
+        state.raw = null;
+        state.filtered = [];
+        state.page = 1;
+        state.pageSize = parseInt(el("pageSizeSel").value || "25", 10);
+        state.filterText = "";
+        state.columns = [];
+        state.sortBy = null;
+        state.sortDir = "asc";
+        state.selected.clear();
+        setDirty(false);
+        updateSelectedPill();
+        updateToolbarVisibility();
+      }
+      el("btnReset").addEventListener("click", resetAll);
+
+      // Paginación y export/copy CSV existentes
+      el("pageSizeSel").addEventListener("change", () => {
+        state.pageSize = parseInt(el("pageSizeSel").value, 10);
+        state.page = 1;
+        renderPage();
+      });
+      el("btnPrevPage").addEventListener("click", () => {
+        if (state.page > 1) {
+          state.page--;
+          renderPage();
+        }
+      });
+      el("btnNextPage").addEventListener("click", () => {
+        const totalPages = Math.max(
+          1,
+          Math.ceil((state.filtered.length || 0) / state.pageSize)
+        );
+        if (state.page < totalPages) {
+          state.page++;
+          renderPage();
+        }
+      });
+
+      function downloadJSON(data, filename) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+      el("btnExportJSONFull").addEventListener("click", () => {
+        if (!state.raw || !state.raw.length) return;
+        const out = state.raw.map(({ _id, ...o }) => o);
+        downloadJSON(
+          out,
+          `GroupLookup_full_${new Date()
+            .toISOString()
+            .slice(0, 19)
+            .replace(/[:T]/g, "-")}.json`
+        );
+      });
+      el("btnExportJSONFiltered").addEventListener("click", () => {
+        if (!state.filtered || !state.filtered.length) return;
+        const out = state.filtered.map(({ _id, ...o }) => o);
+        downloadJSON(
+          out,
+          `GroupLookup_filtered_${new Date()
+            .toISOString()
+            .slice(0, 19)
+            .replace(/[:T]/g, "-")}.json`
+        );
+      });
+
+      function toCsv(rows, columns) {
+        const esc = (v) => {
+          if (v === null || v === undefined) v = "";
+          v = String(v).replace(/<[^>]*>/g, "");
+          if (/[",\r\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+          return v;
+        };
+        const header = columns.map(esc).join(",");
+        const lines = rows.map((r) => columns.map((c) => esc(r[c])).join(","));
+        return [header, ...lines].join("\r\n") + "\r\n";
+      }
+      function parseCsv(text) {
+        // CSV simple (comillas dobles, separador coma)
+        const lines = text
+          .replace(/\r/g, "")
+          .split("\n")
+          .filter((l) => l.trim().length);
+        if (!lines.length) return [];
+        const parseLine = (line) => {
+          const out = [];
+          let cur = "";
+          let inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQ) {
+              if (ch === '"') {
+                if (line[i + 1] === '"') {
+                  cur += '"';
+                  i++;
+                } else inQ = false;
+              } else cur += ch;
+            } else {
+              if (ch === '"') inQ = true;
+              else if (ch === ",") {
+                out.push(cur);
+                cur = "";
+              } else cur += ch;
+            }
+          }
+          out.push(cur);
+          return out;
+        };
+        const header = parseLine(lines[0]);
+        return lines.slice(1).map((l) => {
+          const vals = parseLine(l);
+          const row = {};
+          header.forEach((h, idx) => {
+            row[h] = vals[idx] ?? "";
+          });
+          return row;
+        });
+      }
+      function copyToClipboard(text) {
+        if (!navigator.clipboard) {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand("copy");
+          } catch {}
+          document.body.removeChild(ta);
+        } else {
+          navigator.clipboard.writeText(text).catch(() => {});
+        }
+        el("statusPill").textContent = t("copied") || "Copiado";
+        setTimeout(() => {
+          el("statusPill").textContent = t("idle");
+        }, 1500);
+      }
+      el("btnCopyPage").addEventListener("click", () => {
+        if (!state.filtered || !state.filtered.length) return;
+        const slice = getCurrentSlice();
+        const cols = state.columns.length
+          ? state.columns
+          : Object.keys(slice[0] || {});
+        copyToClipboard(toCsv(slice, cols));
+      });
+      el("btnCopyFiltered").addEventListener("click", () => {
+        if (!state.filtered || !state.filtered.length) return;
+        const cols = state.columns.length
+          ? state.columns
+          : Object.keys(state.filtered[0] || {});
+        copyToClipboard(toCsv(state.filtered, cols));
+      });
+
+      // NUEVO: Operaciones sobre selección (Añadir, Editar, Borrar, Copiar, Cortar, Pegar)
+      function getSelectedRows() {
+        if (!Array.isArray(state.raw)) return [];
+        const set = state.selected;
+        return state.raw.filter((r) => set.has(r._id));
+      }
+
+      el("btnCopySelected").addEventListener("click", () => {
+        const rows = getSelectedRows().map(({ _id, ...o }) => o);
+        if (!rows.length) return;
+        copyToClipboard(JSON.stringify(rows, null, 2));
+      });
+
+      el("btnCutSelected").addEventListener("click", () => {
+        const rows = getSelectedRows().map(({ _id, ...o }) => o);
+        if (!rows.length) return;
+        copyToClipboard(JSON.stringify(rows, null, 2));
+        // delete
+        state.raw = state.raw.filter((r) => !state.selected.has(r._id));
+        state.selected.clear();
+        setDirty(true);
+        applyFilter(state.filterText);
+      });
+
+      el("btnDeleteSelected").addEventListener("click", () => {
+        const n = state.selected.size;
+        if (!n) return;
+        state.raw = state.raw.filter((r) => !state.selected.has(r._id));
+        state.selected.clear();
+        setDirty(true);
+        applyFilter(state.filterText);
+      });
+
+      async function readClipboard() {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const txt = await navigator.clipboard.readText();
+            return txt;
+          }
+        } catch {}
+        return prompt(t("nothingToPaste") || "No hay datos para pegar") || "";
+      }
+
+      el("btnPaste").addEventListener("click", async () => {
+        const txt = await readClipboard();
+        if (!txt) return;
+        let items = null;
+        // Try JSON
+        try {
+          const j = JSON.parse(txt);
+          if (Array.isArray(j)) items = j;
+          else if (j && typeof j === "object") items = [j];
+        } catch {}
+        // Try CSV
+        if (!items) {
+          if (txt.includes(",") || txt.includes("\n")) {
+            const rows = parseCsv(txt);
+            if (rows && rows.length) items = rows;
+          }
+        }
+        if (!items) {
+          alert(t("invalidPaste") || "Formato de pegado no reconocido");
+          return;
+        }
+        if (!Array.isArray(state.raw)) state.raw = [];
+        for (const it of items) {
+          const row = { ...it };
+          delete row._id;
+          row._id = crypto.randomUUID
+            ? crypto.randomUUID()
+            : "id_" + Math.random().toString(36).slice(2);
+          state.raw.push(row);
+        }
+        setDirty(true);
+        applyFilter(state.filterText);
+      });
+
+      // Modal Añadir/Editar
+      const modal = {
+        open(mode, row) {
+          this.mode = mode;
+          this.row = row || {};
+          el("modalTitle").textContent =
+            mode === "edit"
+              ? I18N[currentLang]?.editRecord || "Editar registro"
+              : I18N[currentLang]?.addRecord || "Añadir registro";
+          const fieldsWrap = el("modalFields");
+          fieldsWrap.innerHTML = "";
+          // Determinar columnas base
+          const cols = new Set(
+            state.columns.length ? state.columns : Object.keys(this.row || {})
+          );
+          // Siempre permitir agregar un nuevo campo
+          const inputs = [];
+          function addField(key, val) {
+            const id = "fld_" + Math.random().toString(36).slice(2);
+            const wrapper = document.createElement("div");
+            wrapper.className = "full";
+            wrapper.innerHTML = `
+              <label>${key}</label>
+              <input type="text" id="${id}" value="${val ?? ""}" />
+            `;
+            fieldsWrap.appendChild(wrapper);
+            inputs.push({ key, id });
+          }
+          cols.forEach((c) => {
+            if (c !== "_id") addField(c, row ? row[c] : "");
+          });
+
+          // Bloque para añadir campos personalizados
+          const custom = document.createElement("div");
+          custom.className = "full";
+          custom.innerHTML = `
+            <div class="grid">
+              <div><label>Nuevo campo</label><input type="text" id="newKey" placeholder="nombreCampo" /></div>
+              <div><label>Valor</label><input type="text" id="newVal" placeholder="valor" /></div>
+            </div>
+            <div class="footer" style="justify-content:flex-start; margin-top:.25rem">
+              <button class="btn mini" id="btnAddField">Añadir campo</button>
+            </div>
+          `;
+          fieldsWrap.appendChild(custom);
+
+          custom.querySelector("#btnAddField").addEventListener("click", () => {
+            const k = custom.querySelector("#newKey").value.trim();
+            const v = custom.querySelector("#newVal").value;
+            if (!k) return;
+            addField(k, v);
+            custom.querySelector("#newKey").value = "";
+            custom.querySelector("#newVal").value = "";
+          });
+
+          el("modal").style.display = "flex";
+          this.inputs = inputs;
+        },
+        close() {
+          el("modal").style.display = "none";
+          this.inputs = [];
+          this.mode = null;
+          this.row = null;
+        },
+        save() {
+          const obj = {};
+          for (const inp of this.inputs) {
+            const val = el(inp.id).value;
+            obj[inp.key] = val;
+          }
+          if (this.mode === "edit" && this.row) {
+            const idx = state.raw.findIndex((r) => r._id === this.row._id);
+            if (idx >= 0) {
+              // Conservar _id
+              obj._id = this.row._id;
+              state.raw[idx] = obj;
+            }
+          } else {
+            obj._id = crypto.randomUUID
+              ? crypto.randomUUID()
+              : "id_" + Math.random().toString(36).slice(2);
+            state.raw.push(obj);
+          }
+          setDirty(true);
+          applyFilter(state.filterText);
+          this.close();
+        },
+      };
+      el("modalCancel").addEventListener("click", () => modal.close());
+      el("modalSave").addEventListener("click", () => modal.save());
+      el("modal").addEventListener("click", (e) => {
+        if (e.target.id === "modal") modal.close();
+      });
+
+      el("btnAddRow").addEventListener("click", () => {
+        if (!Array.isArray(state.raw)) state.raw = [];
+        computeColumns();
+        modal.open("add", null);
+      });
+
+      el("btnEditRow").addEventListener("click", () => {
+        const rows = getSelectedRows();
+        if (rows.length !== 1) {
+          alert(
+            I18N[currentLang]?.selectOneEdit ||
+              "Selecciona exactamente 1 fila para modificar"
+          );
+          return;
+        }
+        modal.open("edit", rows[0]);
+      });
+
+      // Consola: Buscar/Limpiar + comandos
+      function showHelp() {
+        const help = `
+/help                         - Mostrar ayuda
+/lang es|en|pt               - Cambiar idioma
+/group NOMBRE                - Establecer nombre de grupo
+/format csv|json             - Establecer formato de salida
+/includeEmail on|off         - Incluir email
+/includePrimary on|off       - Incluir PrimaryGroup
+/includeNested on|off        - Incluir miembros anidados
+/includeDisabled on|off      - Incluir deshabilitados
+/out RUTA                    - Ruta de salida en servidor
+/save on|off                 - Guardar también en servidor
+/filter TEXTO                - Filtrar resultados (JSON) por texto
+/theme next|dark|light|ocean|terminal|contrast - Cambiar apariencia
+/run                         - Ejecutar búsqueda
+/clear                       - Limpiar resultados
+        `.trim();
+        el("result").innerHTML = `<pre>${help}</pre>`;
+      }
+
+      function executeConsole(text) {
+        const line = text.trim();
+        if (!line) return;
+        const parts = line.split(/\s+/);
+        if (!line.startsWith("/")) {
+          // texto libre = filtro
+          applyFilter(line);
+          return;
+        }
+        const cmd = parts[0].toLowerCase();
+        const arg = parts.slice(1).join(" ");
+        const onoff = (v) => /^(on|true|1|yes|si|sí)$/i.test(v);
+
+        switch (cmd) {
+          case "/help":
+            showHelp();
+            break;
+          case "/lang":
+            if (["es", "en", "pt"].includes(arg.toLowerCase())) {
+              currentLang = arg.toLowerCase();
+              el("lang").value = currentLang;
+              localStorage.setItem("adlang", currentLang);
+              applyI18n();
+              const btn = el("btnTheme");
+              if (btn) btn.textContent = t("appearance") + " ▾";
+              const menu = el("themeMenu");
+              if (menu) menu.setAttribute("aria-label", t("appearance"));
+              buildThemeMenu();
+              renderPage();
+            }
+            break;
+          case "/group":
+            el("groupName").value = arg;
+            break;
+          case "/format":
+            if (["csv", "json"].includes(arg.toLowerCase())) {
+              el("format").value = arg.toLowerCase();
+              updateFormatKpi();
+            }
+            break;
+          case "/includeemail":
+            el("includeEmail").checked = onoff(arg);
+            break;
+          case "/includeprimary":
+            el("includePrimary").checked = onoff(arg);
+            break;
+          case "/includenested":
+            el("includeNested").checked = onoff(arg);
+            break;
+          case "/includedisabled":
+            el("includeDisabled").checked = onoff(arg);
+            break;
+          case "/out":
+            el("outFolder").value = arg;
+            break;
+          case "/save":
+            el("saveToServer").checked = onoff(arg);
+            break;
+          case "/filter":
+            applyFilter(arg);
+            break;
+          case "/theme":
+            if (arg.toLowerCase() === "next") {
+              const idx = themes.indexOf(currentTheme);
+              setTheme(themes[(idx + 1) % themes.length]);
+            } else if (themes.includes(arg.toLowerCase())) {
+              setTheme(arg.toLowerCase());
+            }
+            break;
+          case "/clear":
+            resetAll();
+            break;
+          case "/run":
+            el("lookupForm").requestSubmit();
+            break;
+          default:
+            showHelp();
+        }
+      }
+
+      el("consoleInput").addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" && !ev.shiftKey) {
+          ev.preventDefault();
+          executeConsole(el("consoleInput").value);
+        }
+      });
+      el("btnConsoleSearch").addEventListener("click", () =>
+        executeConsole(el("consoleInput").value)
+      );
+      el("btnConsoleClear").addEventListener("click", () => {
+        el("consoleInput").value = "";
+        applyFilter("");
+      });
+
+      // Submit handler (consulta backend)
+      document
+        .getElementById("lookupForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const attrs = [...el("attributes").selectedOptions].map(
+            (o) => o.value
+          );
+          const payload = {
+            groupName: el("groupName").value.trim(),
+            format: el("format").value,
+            includeEmail: el("includeEmail").checked,
+            outFolder: el("outFolder").value.trim(),
+            includePrimary: el("includePrimary").checked,
+            includeNested: el("includeNested").checked,
+            includeDisabled: el("includeDisabled").checked,
+            attributes: attrs,
+            saveToServer: el("saveToServer").checked,
+            language: currentLang,
+          };
+
+          if (!payload.groupName) {
+            el("result").innerHTML = `<pre class="danger">${t(
+              "error"
+            )}: groupName</pre>`;
+            return;
+          }
+
+          setProcessing(true);
+          el("result").innerHTML = `<span class="spinner"></span>${t(
+            "processing"
+          )}`;
+
+          try {
+            const res = await fetch("/api/grouplookup.ps1", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            const savedPath = res.headers.get("X-Saved-Path");
+            if (savedPath) {
+              el("savedPathNote").style.display = "block";
+              el("savedPathNote").textContent = `${t(
+                "savedOnServer"
+              )}: ${savedPath}`;
+            } else {
+              el("savedPathNote").style.display = "none";
+              el("savedPathNote").textContent = "";
+            }
+
+            if (!res.ok) {
+              const txt = await res.text();
+              throw new Error(t("error") + ": " + txt);
+            }
+
+            const contentType = res.headers.get("Content-Type") || "";
+            el("btnReset").style.display = "inline-block";
+
+            if (contentType.includes("text/csv")) {
+              const blob = await res.blob();
+              const fname =
+                res.headers.get("Content-Disposition")?.split("filename=")[1] ||
+                "resultado.csv";
+              const link = document.createElement("a");
+              link.href = window.URL.createObjectURL(blob);
+              link.download = fname.replace(/["']/g, "");
+              link.click();
+              el("result").innerHTML = `${t("download")}: <strong>${
+                link.download
+              }</strong>`;
+              state.raw = null;
+              state.filtered = [];
+              state.columns = [];
+              updateToolbarVisibility();
+              setMembersCount(0);
+              setDirty(false);
+              state.selected.clear();
+              updateSelectedPill();
+            } else if (contentType.includes("application/json")) {
+              const json = await res.json();
+              state.raw = Array.isArray(json) ? json : [];
+              ensureIds();
+              state.sortBy = null;
+              state.sortDir = "asc";
+              state.selected.clear();
+              setDirty(false);
+              applyFilter(""); // compute filtered, columns, and initial render
+              updateToolbarVisibility();
+            } else {
+              const text = await res.text();
+              el("result").innerHTML = "<pre>" + text + "</pre>";
+              state.raw = null;
+              state.filtered = [];
+              state.columns = [];
+              updateToolbarVisibility();
+              setMembersCount(0);
+              setDirty(false);
+              state.selected.clear();
+              updateSelectedPill();
+            }
+          } catch (err) {
+            el("result").innerHTML =
+              '<pre style="color:#ff9a9a">' + err.message + "</pre>";
+          } finally {
+            setProcessing(false);
+          }
+        });
+
+      // Inicializar paginación y toolbar
+      el("pageSizeSel").value = String(state.pageSize);
+      updateToolbarVisibility();
+      updateSelectedPill();
+
+      /* ===========================
+         Dropdown de Temas (Apariencia)
+         =========================== */
+
+      // Etiquetas localizadas para los temas
+      const THEME_LABELS = {
+        es: {
+          dark: "Oscuro",
+          light: "Claro",
+          ocean: "Océano",
+          terminal: "Terminal",
+          contrast: "Alto contraste",
+        },
+        en: {
+          dark: "Dark",
+          light: "Light",
+          ocean: "Ocean",
+          terminal: "Terminal",
+          contrast: "High contrast",
+        },
+        pt: {
+          dark: "Escuro",
+          light: "Claro",
+          ocean: "Oceano",
+          terminal: "Terminal",
+          contrast: "Alto contraste",
+        },
+      };
+      function themeLabel(th) {
+        return (
+          (THEME_LABELS[currentLang] && THEME_LABELS[currentLang][th]) || th
+        );
+      }
+
+      // Construye/actualiza el menú de temas
+      function buildThemeMenu() {
+        const ul = el("themeMenu");
+        if (!ul) return;
+        ul.innerHTML = "";
+        themes.forEach((th) => {
+          const li = document.createElement("li");
+          li.setAttribute("role", "option");
+          li.tabIndex = -1;
+          li.dataset.theme = th;
+          if (th === currentTheme) li.setAttribute("aria-selected", "true");
+          li.textContent = themeLabel(th);
+          li.addEventListener("click", () => {
+            setTheme(th);
+            closeThemeMenu();
+          });
+          ul.appendChild(li);
+        });
+      }
+
+      // Aplica tema y guarda
+      function setTheme(th) {
+        currentTheme = th;
+        document.documentElement.setAttribute("data-theme", th);
+        localStorage.setItem("adtheme", th);
+        buildThemeMenu(); // refresca check ✓
+        // Ajuste de contraste tras cambio de tema
+        try {
+          window.__ensureReadableTheme?.();
+        } catch {}
+      }
+
+      // Abrir/cerrar menú
+      function openThemeMenu() {
+        const menu = el("themeMenu");
+        const btn = el("btnTheme");
+        if (!menu) return;
+        buildThemeMenu();
+        menu.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+        // Enfoca el ítem seleccionado o el primero
+        const selected =
+          menu.querySelector('[aria-selected="true"]') ||
+          menu.querySelector('[role="option"]');
+        selected && selected.focus();
+      }
+      function closeThemeMenu() {
+        const menu = el("themeMenu");
+        const btn = el("btnTheme");
+        if (!menu) return;
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+      function toggleThemeMenu() {
+        const menu = el("themeMenu");
+        if (!menu) return;
+        menu.classList.contains("open") ? closeThemeMenu() : openThemeMenu();
+      }
+
+      // Eventos del botón y accesibilidad
+      el("btnTheme").addEventListener("click", (e) => {
+        e.preventDefault();
+        toggleThemeMenu();
+      });
+      document.addEventListener("click", (e) => {
+        const dd = el("themeDropdown");
+        const menu = el("themeMenu");
+        if (!dd || !menu) return;
+        if (menu.classList.contains("open") && !dd.contains(e.target))
+          closeThemeMenu();
+      });
+      document.addEventListener("keydown", (e) => {
+        const menu = el("themeMenu");
+        if (!menu || !menu.classList.contains("open")) return;
+        const items = Array.from(menu.querySelectorAll('[role="option"]'));
+        if (!items.length) return;
+
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeThemeMenu();
+          el("btnTheme").focus();
+          return;
+        }
+
+        const currentIndex = items.indexOf(document.activeElement);
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          const next = items[(currentIndex + 1 + items.length) % items.length];
+          next.focus();
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          const prev = items[(currentIndex - 1 + items.length) % items.length];
+          prev.focus();
+        } else if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          const f = document.activeElement;
+          if (f && f.dataset && f.dataset.theme) {
+            setTheme(f.dataset.theme);
+            closeThemeMenu();
+            el("btnTheme").focus();
+          }
+        }
+      });
+
+      // Ajuste del texto del botón y menú según idioma
+      (function initThemeUI() {
+        const btn = el("btnTheme");
+        if (btn) btn.textContent = t("appearance") + " ▾";
+        const menu = el("themeMenu");
+        if (menu) menu.setAttribute("aria-label", t("appearance"));
+        buildThemeMenu();
+      })();
+
+      /* ===========================
+         Guardián de Contraste (auto-ajusta --text, --muted, etc.)
+         =========================== */
+      (function ContrastGuard() {
+        // Exponer función para re-ejecutar tras cambios de tema
+        function getVar(name) {
+          return getComputedStyle(document.documentElement)
+            .getPropertyValue(name)
+            .trim();
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        function parseColorToRGB(c) {
+          if (!c) return { r: 255, g: 255, b: 255 };
+          ctx.clearRect(0, 0, 1, 1);
+          ctx.fillStyle = "#000";
+          ctx.fillStyle = c;
+          const computed = ctx.fillStyle;
+          if (computed.startsWith("#")) {
+            const hex = computed.slice(1);
+            const v =
+              hex.length === 3
+                ? hex.split("").map((ch) => parseInt(ch + ch, 16))
+                : [hex.slice(0, 2), hex.slice(2, 4), hex.slice(4, 6)].map((h) =>
+                    parseInt(h, 16)
+                  );
+            return { r: v[0], g: v[1], b: v[2] };
+          }
+          const m = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+          if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+          return { r: 255, g: 255, b: 255 };
+        }
+        function relLuminance({ r, g, b }) {
+          const sr = r / 255,
+            sg = g / 255,
+            sb = b / 255;
+          const lin = (x) =>
+            x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+          const R = lin(sr),
+            G = lin(sg),
+            B = lin(sb);
+          return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+        }
+        function contrastRatio(rgb1, rgb2) {
+          const L1 = relLuminance(rgb1);
+          const L2 = relLuminance(rgb2);
+          const light = Math.max(L1, L2);
+          const dark = Math.min(L1, L2);
+          return (light + 0.05) / (dark + 0.05);
+        }
+        function toHex({ r, g, b }) {
+          const h = (n) => n.toString(16).padStart(2, "0");
+          return `#${h(r)}${h(g)}${h(b)}`;
+        }
+        function pickBWForBackground(bgRgb) {
+          const black = { r: 0, g: 0, b: 0 },
+            white = { r: 255, g: 255, b: 255 };
+          const cb = contrastRatio(bgRgb, black),
+            cw = contrastRatio(bgRgb, white);
+          return cb >= cw ? black : white;
+        }
+        function mix(a, b, t) {
+          return {
+            r: Math.round(a.r * (1 - t) + b.r * t),
+            g: Math.round(a.g * (1 - t) + b.g * t),
+            b: Math.round(a.b * (1 - t) + b.b * t),
+          };
+        }
+        function fitTextOn(bgRgb, desiredRgb, min) {
+          if (contrastRatio(bgRgb, desiredRgb) >= min) return desiredRgb;
+          const bw = pickBWForBackground(bgRgb);
+          if (contrastRatio(bgRgb, bw) >= min) return bw;
+          let lo = 0,
+            hi = 1,
+            best = bw;
+          for (let i = 0; i < 10; i++) {
+            const mid = (lo + hi) / 2;
+            const m = mix(desiredRgb, bw, mid);
+            if (contrastRatio(bgRgb, m) >= min) {
+              best = m;
+              hi = mid;
+            } else {
+              lo = mid;
+            }
+          }
+          return best;
+        }
+        function ensureReadableTheme() {
+          const bg = parseColorToRGB(getVar("--bg"));
+          const card = parseColorToRGB(getVar("--card"));
+          const accent = parseColorToRGB(getVar("--accent"));
+          const accent2 = parseColorToRGB(getVar("--accent-2"));
+
+          const wantText = parseColorToRGB(getVar("--text") || "#ffffff");
+          const wantMuted = parseColorToRGB(getVar("--muted") || "#9aa4b2");
+
+          const MIN_TEXT = 4.5; // texto
+          const MIN_UI = 3.0; // muted/UI
+
+          const textOnBg = fitTextOn(bg, wantText, MIN_TEXT);
+          const textOnCard = fitTextOn(card, wantText, MIN_TEXT);
+
+          const globalText = textOnBg;
+          const mutedBase = fitTextOn(card, wantMuted, MIN_UI);
+          const mutedMixed = mix(mutedBase, card, 0.35);
+
+          const onAccent1 = fitTextOn(
+            accent,
+            { r: 255, g: 255, b: 255 },
+            MIN_UI
+          );
+          const onAccent2 = fitTextOn(
+            accent2,
+            { r: 255, g: 255, b: 255 },
+            MIN_UI
+          );
+          const onAccent =
+            contrastRatio(accent, onAccent1) >=
+            contrastRatio(accent2, onAccent2)
+              ? onAccent1
+              : onAccent2;
+
+          const root = document.documentElement.style;
+          root.setProperty("--text", toHex(globalText));
+          root.setProperty("--text-strong", toHex(globalText));
+          root.setProperty("--muted", toHex(mutedMixed));
+          root.setProperty("--on-accent", toHex(onAccent));
+        }
+
+        // Ejecutar y observar cambios de tema
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", ensureReadableTheme);
+        } else {
+          ensureReadableTheme();
+        }
+        const mo = new MutationObserver((muts) => {
+          for (const m of muts) {
+            if (m.type === "attributes" && m.attributeName === "data-theme") {
+              ensureReadableTheme();
+            }
+          }
+        });
+        mo.observe(document.documentElement, { attributes: true });
+
+        // Exponer global para llamadas manuales
+        window.__ensureReadableTheme = ensureReadableTheme;
+      })();
+    </script>
+  </body>
+</html>
